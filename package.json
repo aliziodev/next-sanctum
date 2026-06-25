@@ -1,0 +1,133 @@
+{
+  "name": "next-sanctum",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Complete Laravel Fortify + Sanctum authentication for Next.js — cookie/CSRF SPA + token, SSR + Client, 2FA, passkeys, Proxy route protection.",
+  "keywords": [
+    "next",
+    "nextjs",
+    "laravel",
+    "sanctum",
+    "fortify",
+    "authentication",
+    "csrf",
+    "2fa",
+    "passkeys",
+    "app-router"
+  ],
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.js"
+      },
+      "require": {
+        "types": "./dist/server.d.cts",
+        "default": "./dist/server.cjs"
+      }
+    },
+    "./proxy": {
+      "import": {
+        "types": "./dist/proxy.d.ts",
+        "default": "./dist/proxy.js"
+      },
+      "require": {
+        "types": "./dist/proxy.d.cts",
+        "default": "./dist/proxy.cjs"
+      }
+    },
+    "./actions": {
+      "import": {
+        "types": "./dist/actions.d.ts",
+        "default": "./dist/actions.js"
+      },
+      "require": {
+        "types": "./dist/actions.d.cts",
+        "default": "./dist/actions.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "server": [
+        "./dist/server.d.ts"
+      ],
+      "proxy": [
+        "./dist/proxy.d.ts"
+      ],
+      "actions": [
+        "./dist/actions.d.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "bunchee",
+    "dev": "bunchee --watch",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "attw": "attw --pack .",
+    "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build && pnpm run attw"
+  },
+  "peerDependencies": {
+    "@laravel/passkeys": "*",
+    "next": ">=15.0.0 <17.0.0",
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@laravel/passkeys": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.0",
+    "@eslint/js": "^9.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^3.2.6",
+    "bunchee": "^6.4.0",
+    "eslint": "^9.0.0",
+    "happy-dom": "^15.0.0",
+    "msw": "^2.7.0",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+!.env.example
+npm-debug.log*
+pnpm-debug.log*
+.vitest/
+*.tgz
+.claude/
+.idea/
+.vscode/
