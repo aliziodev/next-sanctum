@@ -1,13 +1,17 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   SanctumProvider,
   useApi,
   useAuth,
+  useClient,
+  useMutation,
   usePasskeys,
+  useResource,
   useTwoFactor,
   useUser,
+  ValidationError,
 } from "../src"
 import type { SanctumConfig } from "../src"
 import { makeFetch, type MockRoute } from "./helpers"
@@ -213,6 +217,118 @@ describe("SanctumProvider + hooks", () => {
       await result.current.tf.challenge({ code: "123456" })
     })
     expect(result.current.auth.user).toEqual({ id: 7 })
+  })
+
+  it("useClient performs imperative authenticated requests (CRUD)", async () => {
+    document.cookie = "XSRF-TOKEN=tok"
+    const { config, calls } = setup(
+      [{ method: "POST", path: "/api/posts", body: { id: 1, title: "Hi" } }],
+      { initialRequest: false },
+    )
+    const { result } = renderHook(() => useClient(), {
+      wrapper: wrap(config, { id: 1 }),
+    })
+    let created: unknown
+    await act(async () => {
+      created = await result.current.request("/api/posts", {
+        method: "POST",
+        json: { title: "Hi" },
+      })
+    })
+    expect(created).toEqual({ id: 1, title: "Hi" })
+    const call = calls.find((c) => c.url.endsWith("/api/posts"))
+    expect(call?.method).toBe("POST")
+  })
+
+  it("useResource maps REST CRUD to the right endpoints", async () => {
+    document.cookie = "XSRF-TOKEN=tok"
+    const { config, calls } = setup(
+      [
+        { method: "GET", path: "/api/posts", body: [{ id: 1 }] },
+        { method: "POST", path: "/api/posts", body: { id: 2 } },
+        { method: "PUT", path: "/api/posts/2", body: { id: 2 } },
+        { method: "DELETE", path: "/api/posts/2" },
+      ],
+      { initialRequest: false },
+    )
+    const { result } = renderHook(() => useResource<{ id: number }>("/api/posts"), {
+      wrapper: wrap(config, { id: 1 }),
+    })
+    await act(async () => {
+      expect(await result.current.list()).toEqual([{ id: 1 }])
+      await result.current.create({ title: "x" })
+      await result.current.update(2, { title: "y" })
+      await result.current.delete(2)
+    })
+    const hit = (path: string, method: string) =>
+      calls.some((c) => c.url.endsWith(path) && c.method === method)
+    expect(hit("/api/posts", "POST")).toBe(true)
+    expect(hit("/api/posts/2", "PUT")).toBe(true)
+    expect(hit("/api/posts/2", "DELETE")).toBe(true)
+  })
+
+  it("useMutation manages loading + lifecycle callbacks", async () => {
+    document.cookie = "XSRF-TOKEN=tok"
+    const { config } = setup(
+      [{ method: "POST", path: "/api/posts", body: { id: 7 } }],
+      { initialRequest: false },
+    )
+    const onSuccess = vi.fn()
+    const onFinish = vi.fn()
+    const { result } = renderHook(
+      () => {
+        const { request } = useClient()
+        return useMutation(
+          (vars: { title: string }) =>
+            request<{ id: number }>("/api/posts", { method: "POST", json: vars }),
+          { onSuccess, onFinish },
+        )
+      },
+      { wrapper: wrap(config, { id: 1 }) },
+    )
+
+    expect(result.current.isPending).toBe(false)
+    await act(async () => {
+      await result.current.mutateAsync({ title: "x" })
+    })
+    expect(result.current.data).toEqual({ id: 7 })
+    expect(onSuccess).toHaveBeenCalledWith({ id: 7 }, { title: "x" })
+    expect(onFinish).toHaveBeenCalled()
+  })
+
+  it("useMutation surfaces a 422 ValidationError (form pattern)", async () => {
+    document.cookie = "XSRF-TOKEN=tok"
+    const { config } = setup(
+      [
+        {
+          method: "POST",
+          path: "/api/posts",
+          status: 422,
+          body: { message: "Invalid", errors: { title: ["The title field is required."] } },
+        },
+      ],
+      { initialRequest: false },
+    )
+    const onError = vi.fn()
+    const { result } = renderHook(
+      () => {
+        const { request } = useClient()
+        return useMutation(
+          (vars: { title: string }) =>
+            request("/api/posts", { method: "POST", json: vars }),
+          { onError },
+        )
+      },
+      { wrapper: wrap(config, { id: 1 }) },
+    )
+    await act(async () => {
+      await result.current.mutateAsync({ title: "" }).catch(() => {})
+    })
+    expect(result.current.error).toBeInstanceOf(ValidationError)
+    expect((result.current.error as ValidationError).errors).toEqual({
+      title: ["The title field is required."],
+    })
+    expect(onError).toHaveBeenCalled()
   })
 
   it("useApi.refetch re-runs the request", async () => {
