@@ -2,9 +2,10 @@
 
 [![CI](https://github.com/aliziodev/next-sanctum/actions/workflows/ci.yml/badge.svg)](https://github.com/aliziodev/next-sanctum/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/next-sanctum.svg)](https://www.npmjs.com/package/next-sanctum)
-[![npm downloads](https://img.shields.io/npm/dm/next-sanctum.svg)](https://www.npmjs.com/package/next-sanctum)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/next-sanctum)](https://bundlephobia.com/package/next-sanctum)
-[![license](https://img.shields.io/npm/l/next-sanctum.svg)](https://github.com/aliziodev/next-sanctum/blob/main/LICENSE)
+[![npm downloads](https://img.shields.io/npm/dm/next-sanctum.svg)](https://npm-stat.com/charts.html?package=next-sanctum)
+[![install size](https://img.shields.io/badge/dynamic/json?url=https://packagephobia.com/v2/api.json?p=next-sanctum&query=$.install.pretty&label=install%20size)](https://packagephobia.now.sh/result?p=next-sanctum)
+[![npm bundle size](https://img.shields.io/bundlephobia/minzip/next-sanctum)](https://bundlephobia.com/package/next-sanctum@latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/aliziodev/next-sanctum/blob/main/LICENSE)
 
 A complete **Laravel (Fortify + Sanctum)** authentication client for the **Next.js** App Router.
 Cookie/CSRF SPA + token/Bearer modes, SSR & CSR, route protection via `proxy.ts`, **2FA**,
@@ -14,7 +15,7 @@ Cookie/CSRF SPA + token/Bearer modes, SSR & CSR, route protection via `proxy.ts`
 - ✅ SSR (Server Component, Route Handler, Server Action) + Client hooks
 - ✅ Authenticated data fetching — reads (`useApi`), mutations (`useClient`), server (`serverFetch`)
 - ✅ Full Fortify flows · 2FA TOTP · Passkeys (interop with `@laravel/passkeys`)
-- ✅ TypeScript-first, dual ESM/CJS, tree-shakeable, **zero runtime deps** (~10 kB gzip)
+- ✅ TypeScript-first, dual ESM/CJS, tree-shakeable, **zero runtime deps** (~6 kB gzip)
 
 > Compatible with **Next.js 15/16**, **React 18/19**, **Node 18.18+**.
 
