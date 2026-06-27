@@ -14,6 +14,7 @@ import type {
   SanctumClient,
   SanctumConfig,
   SanctumUser,
+  VerifyEmailPayload,
 } from "../core"
 import { createAuthApi } from "../features/auth"
 import type { AuthApi } from "../features/auth"
@@ -184,6 +185,14 @@ export function SanctumProvider<TUser = SanctumUser>({
     [profile, refresh],
   )
 
+  const verifyEmail = useCallback(
+    async (payload: VerifyEmailPayload) => {
+      await emailVerification.verifyEmail(payload)
+      await refresh().catch(() => {})
+    },
+    [emailVerification, refresh],
+  )
+
   const twoFactor = useMemo<TwoFactorApi>(
     () => ({
       ...rawTwoFactor,
@@ -266,6 +275,7 @@ export function SanctumProvider<TUser = SanctumUser>({
       updatePassword: password.updatePassword,
       updateProfile,
       resendEmailVerification: emailVerification.resendEmailVerification,
+      verifyEmail,
       twoFactor,
       passkeys,
     }),
@@ -280,6 +290,7 @@ export function SanctumProvider<TUser = SanctumUser>({
       refresh,
       register,
       updateProfile,
+      verifyEmail,
       twoFactor,
       passkeys,
       password,

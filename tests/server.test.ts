@@ -43,6 +43,20 @@ describe("serverFetch (anti-SSRF)", () => {
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe("https://api.test/api/user")
   })
 
+  it("presents the base origin as Origin (Sanctum stateful SSR auth)", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response("{}", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    await serverFetch("/api/user")
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers
+    expect(headers.get("origin")).toBe("https://api.test")
+  })
+
   it("bootstraps the CSRF cookie for stateful requests", async () => {
     const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
       if (url.endsWith("/sanctum/csrf-cookie")) {

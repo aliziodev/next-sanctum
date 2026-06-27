@@ -57,6 +57,13 @@ export async function serverFetch(
   const headers = new Headers(rest.headers)
   if (!headers.has("accept")) headers.set("accept", "application/json")
 
+  // Sanctum's statefulApi() only treats a request as first-party (session/cookie
+  // auth) when its Origin/Referer matches a stateful domain. A server-side fetch
+  // carries no browser Origin, so present the API's own origin — which Sanctum
+  // always includes in its stateful domains by default — so SSR cookie auth
+  // (e.g. getUser() in a Server Component) is recognised instead of 401-ing.
+  if (!headers.has("origin")) headers.set("origin", new URL(baseUrl).origin)
+
   const method = (rest.method ?? "GET").toUpperCase()
   const csrfCookieName = csrf?.cookie ?? "XSRF-TOKEN"
   const csrfHeaderName = csrf?.header ?? "X-XSRF-TOKEN"
@@ -142,6 +149,12 @@ const FORWARD_REQUEST_HEADERS = [
   "authorization",
   "x-xsrf-token",
   "x-requested-with",
+  // Sanctum's SPA (cookie) auth only treats a request as "stateful" when it
+  // carries an Origin or Referer matching SANCTUM_STATEFUL_DOMAINS. Forwarding
+  // them lets the canonical `routes/api.php` + `auth:sanctum` pattern work
+  // through this proxy. Safe: `upstream` is pinned (anti-SSRF preserved).
+  "origin",
+  "referer",
 ]
 
 // Allowlist of response headers forwarded to the client — internal/debug headers

@@ -155,4 +155,20 @@ describe("fortify flows", () => {
       ),
     ).toBe(true)
   })
+
+  it("verifyEmail → GET /email/verify/{id}/{hash} with signed query", async () => {
+    const { client, config, calls } = setupClient([
+      { method: "GET", path: "/email/verify/5/abc123", status: 204 },
+    ])
+    await createEmailVerificationApi(client, config).verifyEmail({
+      id: 5,
+      hash: "abc123",
+      expires: 1782533682,
+      signature: "deadbeef",
+    })
+    const call = calls.find((c) => c.url.includes("/email/verify/5/abc123"))
+    expect(call?.method).toBe("GET")
+    expect(call?.url).toContain("expires=1782533682")
+    expect(call?.url).toContain("signature=deadbeef")
+  })
 })

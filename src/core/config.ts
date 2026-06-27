@@ -17,6 +17,7 @@ const DEFAULT_ENDPOINTS: SanctumEndpoints = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   emailVerificationNotification: "/email/verification-notification",
+  verifyEmail: "/email/verify",
   confirmPassword: "/user/confirm-password",
   confirmedPasswordStatus: "/user/confirmed-password-status",
   profileInformation: "/user/profile-information",

@@ -93,4 +93,25 @@ describe("createSanctumRouteProxy", () => {
     expect(res.headers.get("x-powered-by")).toBeNull()
     expect(res.headers.get("server")).toBeNull()
   })
+
+  it("forwards Origin & Referer (Sanctum SPA stateful detection)", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response("ok", { status: 200 }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    const handler = createSanctumRouteProxy({ upstream: "https://api.laravel.test" })
+
+    const req = new Request("https://app.test/api/sanctum/api/user", {
+      headers: {
+        origin: "https://app.test",
+        referer: "https://app.test/dashboard",
+      },
+    })
+    await handler(req, ctx(["api", "user"]))
+
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers
+    expect(headers.get("origin")).toBe("https://app.test")
+    expect(headers.get("referer")).toBe("https://app.test/dashboard")
+  })
 })

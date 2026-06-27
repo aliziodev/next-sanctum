@@ -51,4 +51,5 @@ export type {
   SanctumUser,
   TwoFactorChallengePayload,
   UpdatePasswordPayload,
+  VerifyEmailPayload,
 } from "./core"

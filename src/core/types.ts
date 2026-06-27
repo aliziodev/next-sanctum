@@ -55,6 +55,8 @@ export interface SanctumEndpoints {
   forgotPassword: string
   resetPassword: string
   emailVerificationNotification: string
+  /** Base path for completing verification; `/{id}/{hash}` is appended. */
+  verifyEmail: string
   confirmPassword: string
   confirmedPasswordStatus: string
   profileInformation: string
@@ -235,6 +237,14 @@ export interface RegisterPayload {
 export interface ForgotPasswordPayload {
   email: string
   [key: string]: unknown
+}
+
+/** Params from a Fortify email-verification link (`/email/verify/{id}/{hash}?expires&signature`). */
+export interface VerifyEmailPayload {
+  id: string | number
+  hash: string
+  expires: string | number
+  signature: string
 }
 
 export interface ResetPasswordPayload {

@@ -1,6 +1,10 @@
 # next-sanctum
 
 [![CI](https://github.com/aliziodev/next-sanctum/actions/workflows/ci.yml/badge.svg)](https://github.com/aliziodev/next-sanctum/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/next-sanctum.svg)](https://www.npmjs.com/package/next-sanctum)
+[![npm downloads](https://img.shields.io/npm/dm/next-sanctum.svg)](https://www.npmjs.com/package/next-sanctum)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/next-sanctum)](https://bundlephobia.com/package/next-sanctum)
+[![license](https://img.shields.io/npm/l/next-sanctum.svg)](https://github.com/aliziodev/next-sanctum/blob/main/LICENSE)
 
 A complete **Laravel (Fortify + Sanctum)** authentication client for the **Next.js** App Router.
 Cookie/CSRF SPA + token/Bearer modes, SSR & CSR, route protection via `proxy.ts`, **2FA**,
@@ -13,6 +17,9 @@ Cookie/CSRF SPA + token/Bearer modes, SSR & CSR, route protection via `proxy.ts`
 - ✅ TypeScript-first, dual ESM/CJS, tree-shakeable, **zero runtime deps** (~10 kB gzip)
 
 > Compatible with **Next.js 15/16**, **React 18/19**, **Node 18.18+**.
+
+> 🚀 **Want a ready-made app?** The [**Laravel + Next.js starter kit**](https://github.com/aliziodev/laravel-next-starter-kit) is built on next-sanctum — a full decoupled app (login, registration, 2FA, passkeys, settings, dark mode) scaffolded in one command:
+> `laravel new my-app --using=aliziodev/laravel-next-starter-kit`
 
 ## Table of contents
 
@@ -429,7 +436,7 @@ from there (`publicRuntimeConfig` / `serverRuntimeConfig` are deprecated and don
 - **Everything else** → a shared module you import once:
 
 ```ts
-// lib/sanctum.config.ts
+// lib/sanctum.ts
 import type { SanctumConfig } from "next-sanctum"
 
 export const sanctumConfig = {
@@ -442,7 +449,7 @@ export const sanctumConfig = {
 
 ```tsx
 // app/providers.tsx
-import { sanctumConfig } from "@/lib/sanctum.config"
+import { sanctumConfig } from "@/lib/sanctum"
 <SanctumProvider config={sanctumConfig} initialUser={initialUser}>{children}</SanctumProvider>
 ```
 

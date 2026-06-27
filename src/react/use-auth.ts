@@ -8,6 +8,7 @@ import type {
   ResetPasswordPayload,
   SanctumUser,
   UpdatePasswordPayload,
+  VerifyEmailPayload,
 } from "../core"
 
 export interface UseAuthResult<TUser = SanctumUser> {
@@ -25,6 +26,7 @@ export interface UseAuthResult<TUser = SanctumUser> {
   updatePassword: (payload: UpdatePasswordPayload) => Promise<void>
   updateProfile: (payload: Record<string, unknown>) => Promise<void>
   resendEmailVerification: () => Promise<void>
+  verifyEmail: (payload: VerifyEmailPayload) => Promise<void>
 }
 
 /** Authentication & account state and actions (login, register, password, profile, email verification). */
@@ -45,5 +47,6 @@ export function useAuth<TUser = SanctumUser>(): UseAuthResult<TUser> {
     updatePassword: ctx.updatePassword,
     updateProfile: ctx.updateProfile,
     resendEmailVerification: ctx.resendEmailVerification,
+    verifyEmail: ctx.verifyEmail,
   }
 }

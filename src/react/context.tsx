@@ -10,6 +10,7 @@ import type {
   SanctumEventEmitter,
   SanctumUser,
   UpdatePasswordPayload,
+  VerifyEmailPayload,
 } from "../core"
 import type { AuthApi } from "../features/auth"
 import type { PasskeysApi } from "../features/passkeys"
@@ -39,6 +40,7 @@ export interface SanctumContextValue<TUser = SanctumUser> {
   updatePassword: (payload: UpdatePasswordPayload) => Promise<void>
   updateProfile: (payload: Record<string, unknown>) => Promise<void>
   resendEmailVerification: () => Promise<void>
+  verifyEmail: (payload: VerifyEmailPayload) => Promise<void>
   twoFactor: TwoFactorApi
   passkeys: PasskeysApi
 }

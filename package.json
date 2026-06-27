@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
+  "author": "aliziodev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aliziodev/next-sanctum.git"
+  },
+  "homepage": "https://github.com/aliziodev/next-sanctum#readme",
+  "bugs": "https://github.com/aliziodev/next-sanctum/issues",
   "description": "Complete Laravel Fortify + Sanctum authentication for Next.js — cookie/CSRF SPA + token, SSR + Client, 2FA, passkeys, Proxy route protection.",
   "keywords": [
     "next",
