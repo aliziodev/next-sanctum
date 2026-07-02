@@ -87,7 +87,11 @@ export interface FeatureFlags {
   updatePasswords?: boolean
   twoFactorAuthentication?: boolean | TwoFactorFeature
   passkeys?: boolean | PasskeysFeature
-  /** v1.1 — not yet implemented. */
+  /**
+   * Device sessions (list/revoke) — opt-in, default false. Fortify ships no sessions
+   * API: the Laravel app must expose the `endpoints.sessions` routes itself over the
+   * framework's `sessions` table (`SESSION_DRIVER=database`).
+   */
   deviceSessions?: boolean
 }
 

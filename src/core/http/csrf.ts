@@ -3,6 +3,7 @@
  * form, so its value MUST be decoded before being sent as the
  * `X-XSRF-TOKEN` header (the most common source of Sanctum integration bugs).
  */
+import { decodeCookieValue } from "./cookies"
 
 /** Read a single cookie from document.cookie. Null on the server (no document). */
 export function readCookie(name: string): string | null {
@@ -22,9 +23,5 @@ export function readCookie(name: string): string | null {
 export function readXsrfToken(cookieName: string): string | null {
   const raw = readCookie(cookieName)
   if (raw === null) return null
-  try {
-    return decodeURIComponent(raw)
-  } catch {
-    return raw
-  }
+  return decodeCookieValue(raw)
 }

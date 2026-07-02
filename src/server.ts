@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import {
   applySetCookies,
   ConfigError,
+  decodeCookieValue,
   getSetCookies,
   resolveServerBaseUrl,
   STATEFUL_METHODS,
@@ -45,6 +46,13 @@ function buildServerUrl(baseUrl: string, path: string): string {
  * Server Action). Forwards cookies from `await cookies()` to Laravel. For stateful
  * requests it includes the CSRF header, bootstrapping the CSRF cookie when missing
  * (the bootstrap can only persist cookies from a Server Action / Route Handler).
+ *
+ * **Security — stateful methods (POST/PUT/PATCH/DELETE):** this helper bootstraps and
+ * echoes Laravel's CSRF token itself and presents a first-party Origin, so Laravel's
+ * CSRF check no longer distinguishes cross-site calls. Server Actions are safe (Next
+ * validates their Origin against the Host), but a plain Route Handler has NO such
+ * check — validate `request.headers.get("origin")` against your app origin yourself
+ * before making stateful calls from one, or a cross-site POST could trigger them.
  */
 export async function serverFetch(
   path: string,
@@ -79,7 +87,7 @@ export async function serverFetch(
       token = cookieStore.get(csrfCookieName)?.value
     }
     if (token && !headers.has(csrfHeaderName)) {
-      headers.set(csrfHeaderName, decodeURIComponent(token))
+      headers.set(csrfHeaderName, decodeCookieValue(token))
     }
   }
 
@@ -155,6 +163,11 @@ const FORWARD_REQUEST_HEADERS = [
   // through this proxy. Safe: `upstream` is pinned (anti-SSRF preserved).
   "origin",
   "referer",
+  // Without this, Laravel sees every user as the Next server's IP — per-IP
+  // throttling (login lockout) becomes one shared bucket and audit logs are
+  // useless. Only trustworthy when a proxy you control sets it (and Laravel's
+  // TrustProxies is configured); a direct client can spoof it either way.
+  "x-forwarded-for",
 ]
 
 // Allowlist of response headers forwarded to the client — internal/debug headers
@@ -232,6 +245,12 @@ export function createSanctumRouteProxy(options: SanctumRouteProxyOptions) {
     for (const name of FORWARD_RESPONSE_HEADERS) {
       const value = upstreamResponse.headers.get(name)
       if (value) responseHeaders.set(name, value)
+    }
+    // Proxied responses are authenticated per-user; when the upstream doesn't say
+    // otherwise, forbid caching so a shared cache/CDN can't serve one user's data
+    // to another.
+    if (!responseHeaders.has("cache-control")) {
+      responseHeaders.set("cache-control", "no-store")
     }
     for (const cookie of getSetCookies(upstreamResponse.headers)) {
       responseHeaders.append("set-cookie", cookie)

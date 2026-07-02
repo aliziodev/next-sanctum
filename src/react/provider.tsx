@@ -30,6 +30,8 @@ import { createTwoFactorApi } from "../features/two-factor"
 import type { TwoFactorApi } from "../features/two-factor"
 import { createPasskeysApi } from "../features/passkeys"
 import type { PasskeysApi } from "../features/passkeys"
+import { createSessionsApi } from "../features/sessions"
+import type { SessionsApi } from "../features/sessions"
 import { resolveTokenStorage } from "../storage"
 import { SanctumContext } from "./context"
 import type { AuthStatus, LoginFn, SanctumContextValue } from "./context"
@@ -56,6 +58,7 @@ interface Instance<TUser> {
   emailVerification: EmailVerificationApi
   twoFactor: TwoFactorApi
   passkeys: PasskeysApi
+  sessions: SessionsApi
 }
 
 export function SanctumProvider<TUser = SanctumUser>({
@@ -92,6 +95,7 @@ export function SanctumProvider<TUser = SanctumUser>({
       emailVerification: createEmailVerificationApi(client, resolved),
       twoFactor: createTwoFactorApi(client, resolved),
       passkeys: createPasskeysApi(client, resolved),
+      sessions: createSessionsApi(client, resolved),
     }
   }
   const {
@@ -105,6 +109,7 @@ export function SanctumProvider<TUser = SanctumUser>({
     emailVerification,
     twoFactor: rawTwoFactor,
     passkeys: rawPasskeys,
+    sessions,
   } = instanceRef.current
 
   const [user, setUser] = useState<TUser | null>(() => initialUser ?? null)
@@ -278,6 +283,7 @@ export function SanctumProvider<TUser = SanctumUser>({
       verifyEmail,
       twoFactor,
       passkeys,
+      sessions,
     }),
     [
       resolved,
@@ -293,6 +299,7 @@ export function SanctumProvider<TUser = SanctumUser>({
       verifyEmail,
       twoFactor,
       passkeys,
+      sessions,
       password,
       emailVerification,
     ],

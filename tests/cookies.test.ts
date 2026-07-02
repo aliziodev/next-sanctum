@@ -1,6 +1,19 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest"
-import { applySetCookies, parseSetCookie } from "../src/core/http/cookies"
+import {
+  applySetCookies,
+  decodeCookieValue,
+  parseSetCookie,
+} from "../src/core/http/cookies"
+
+describe("decodeCookieValue", () => {
+  it("URL-decodes a value", () => {
+    expect(decodeCookieValue("a%3Db%20c")).toBe("a=b c")
+  })
+  it("returns malformed percent-encoding raw instead of throwing", () => {
+    expect(decodeCookieValue("%zz-malformed")).toBe("%zz-malformed")
+  })
+})
 
 describe("parseSetCookie", () => {
   it("parses name, value & attributes", () => {

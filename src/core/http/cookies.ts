@@ -23,6 +23,16 @@ export interface CookieWriter {
   set(name: string, value: string, options?: ParsedCookie["options"]): void
 }
 
+/** URL-decode a cookie value, tolerating malformed percent-encoding (returned raw) —
+ * a malformed cookie (e.g. tossed from a subdomain) must not throw into the request path. */
+export function decodeCookieValue(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 /**
  * Read all Set-Cookie headers as an array. Prefers `Headers.getSetCookie()` (Node ≥18.14,
  * all supported Next runtimes). The single-header fallback only handles one cookie — we do

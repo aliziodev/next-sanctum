@@ -1,6 +1,6 @@
 import "server-only"
 import { cookies } from "next/headers"
-import { applySetCookies, resolveServerBaseUrl } from "./core"
+import { applySetCookies, decodeCookieValue, resolveServerBaseUrl } from "./core"
 import type {
   ConfirmPasswordPayload,
   ForgotPasswordPayload,
@@ -14,6 +14,14 @@ import type {
  * Server-action helpers. WRAPPED by the consumer's own Server Action (`'use server'`)
  * — not literally `'use server'` (see §6 of the plan). Runs the CSRF→POST flow and
  * writes Laravel's Set-Cookie into `cookies()` so the session is persisted.
+ *
+ * **Security — Server Actions ONLY.** These helpers bootstrap and echo Laravel's CSRF
+ * token themselves, so Laravel can no longer tell a cross-site call apart. The
+ * effective CSRF protection is Next.js's Server-Action Origin↔Host check. Calling
+ * them from a plain Route Handler skips that check: a cross-site form POST to your
+ * handler could then e.g. log the victim into an attacker's account (login CSRF).
+ * If you must call these from a Route Handler, validate the request's `Origin`
+ * header against your app origin first.
  */
 
 export interface ActionConfig {
@@ -93,8 +101,12 @@ async function statefulPost(
     accept: "application/json",
     "content-type": "application/json",
     cookie: store.toString(),
+    // Same as serverFetch: a server-side fetch carries no browser Origin, so present
+    // the API's own origin so Sanctum's stateful-domain check recognises the session
+    // (endpoints behind `auth:sanctum`, e.g. confirm-password, would 401 without it).
+    origin: new URL(base).origin,
   }
-  if (token) headers[csrfHeader] = decodeURIComponent(token)
+  if (token) headers[csrfHeader] = decodeCookieValue(token)
 
   const response = await fetch(`${base}${path}`, {
     method: "POST",

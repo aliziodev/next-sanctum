@@ -14,6 +14,7 @@ import type {
 } from "../core"
 import type { AuthApi } from "../features/auth"
 import type { PasskeysApi } from "../features/passkeys"
+import type { SessionsApi } from "../features/sessions"
 import type { TwoFactorApi } from "../features/two-factor"
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated"
@@ -43,6 +44,7 @@ export interface SanctumContextValue<TUser = SanctumUser> {
   verifyEmail: (payload: VerifyEmailPayload) => Promise<void>
   twoFactor: TwoFactorApi
   passkeys: PasskeysApi
+  sessions: SessionsApi
 }
 
 export const SanctumContext = createContext<SanctumContextValue | null>(null)

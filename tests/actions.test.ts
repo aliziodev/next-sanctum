@@ -69,6 +69,35 @@ describe("actions.login", () => {
     expect(headers["X-XSRF-TOKEN"]).toBe("tok123")
   })
 
+  it("presents the API's own Origin (Sanctum stateful-domain check)", async () => {
+    cookieJar.set("XSRF-TOKEN", "tok")
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response(null, { status: 200 }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await logout({ baseUrl: "https://api.test" })
+
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>
+    expect(headers["origin"]).toBe("https://api.test")
+  })
+
+  it("tolerates a malformed XSRF cookie (no URIError → 500)", async () => {
+    cookieJar.set("XSRF-TOKEN", "%zz-malformed")
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response(null, { status: 200 }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    const result = await logout({ baseUrl: "https://api.test" })
+
+    expect(result.ok).toBe(true)
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>
+    expect(headers["X-XSRF-TOKEN"]).toBe("%zz-malformed")
+  })
+
   it("login 422 → ok:false + errors", async () => {
     cookieJar.set("XSRF-TOKEN", "tok") // skip the csrf fetch
     const fetchMock = vi.fn(

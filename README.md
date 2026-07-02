@@ -27,7 +27,7 @@ Cookie/CSRF SPA + token/Bearer modes, SSR & CSR, route protection via `proxy.ts`
 - [Installation](#installation) · [Quick start](#quick-start-cookie-mode)
 - [Hooks](#hooks-client) · [**Authenticated data & CRUD**](#authenticated-data--crud-beyond-auth)
 - [Server helpers](#server-helpers-next-sanctumserver) · [Route guard](#route-guard-proxyts) · [Server Actions](#login-via-server-action-next-sanctumactions)
-- [2FA](#2fa-fortify) · [Passkeys](#passkeys-interop) · [Token mode](#token-mode-bearer) · [Catch-all proxy](#catch-all-server-proxy-anti-ssrf)
+- [2FA](#2fa-fortify) · [Passkeys](#passkeys-interop) · [Device sessions](#device-sessions) · [Token mode](#token-mode-bearer) · [Catch-all proxy](#catch-all-server-proxy-anti-ssrf)
 - [**Configuration reference**](#configuration-reference) · [**Responses & return types**](#responses--return-types) · [**Error handling**](#error-handling)
 - [Events & interceptors](#events--interceptors) · [TypeScript](#typescript-the-user-model) · [Security](#security)
 
@@ -109,6 +109,7 @@ export function LoginForm() {
 | `useMutation(fn, opts?)` | imperative mutation + loading + lifecycle → `{ mutate, mutateAsync, isPending, error, data, reset }` |
 | `useTwoFactor()` | `challenge`, `enable`, `confirm`, `disable`, `getQrCode`, `getSecretKey`, `getRecoveryCodes`, `regenerateRecoveryCodes` |
 | `usePasskeys()` | `isSupported`, `register`, `login`, `confirmPassword`, `delete` (requires `@laravel/passkeys`) |
+| `useSessions()` | `list`, `logoutOthers`, `logout` (opt-in `features.deviceSessions` + [custom Laravel endpoints](#device-sessions)) |
 
 ## Authenticated data & CRUD (beyond auth)
 
@@ -366,6 +367,12 @@ export async function loginAction(_prev: unknown, formData: FormData) {
 
 Available: `login`, `logout`, `register`, `twoFactorChallenge`, `forgotPassword`, `resetPassword`, `confirmPassword` — each `(payload, config?) → Promise<ActionResult>`.
 
+> **Security — call these from Server Actions only.** The helpers bootstrap + echo Laravel's
+> CSRF token themselves, so the effective cross-site protection is Next.js's Server-Action
+> Origin check. A plain Route Handler has no such check — a cross-site POST to it could
+> trigger state changes (e.g. login CSRF). If you must use a Route Handler, validate the
+> request's `Origin` header against your app origin first.
+
 ## 2FA (Fortify)
 
 ```tsx
@@ -393,6 +400,31 @@ if (await pk.isSupported()) {
   await pk.login()                       // passwordless login
 }
 ```
+
+## Device sessions
+
+Opt-in (`features.deviceSessions: true`). Fortify ships no sessions API, but Laravel's default
+migration already includes the `sessions` table — set `SESSION_DRIVER=database` and expose three
+small endpoints over it (the [laravel-next-starter-kit](https://github.com/aliziodev/laravel-next-starter-kit)
+includes them):
+
+| Endpoint | Contract |
+|---|---|
+| `GET /api/sessions` | `DeviceSession[]` — `{ id, ip_address, user_agent, is_current, last_active_at }` (ISO-8601, from `last_activity`) |
+| `DELETE /api/sessions/others` | log out every other session; validate `{ password }` from the body (or protect with `password.confirm`) |
+| `DELETE /api/sessions/{id}` | log out one session (must belong to the user; reject the current one) |
+
+```tsx
+"use client"
+import { useSessions } from "next-sanctum"
+
+const sessions = useSessions()
+const rows = await sessions.list()                       // → DeviceSession[]
+await sessions.logoutOthers({ password: "secret" })      // keep only this device
+await sessions.logout(rows[1].id)                        // revoke one device
+```
+
+Endpoint paths are configurable via `endpoints.sessions` (`list` / `logoutOthers` / `logout`).
 
 ## Token mode (Bearer)
 
@@ -424,7 +456,7 @@ export const PATCH = handler
 export const DELETE = handler
 ```
 
-`upstream` is pinned, path traversal & absolute URLs are rejected, only an allowlist of response headers (plus Set-Cookie) is forwarded.
+`upstream` is pinned, path traversal & absolute URLs are rejected, only an allowlist of response headers (plus Set-Cookie) is forwarded. Responses default to `Cache-Control: no-store` unless the upstream says otherwise. `X-Forwarded-For` is passed through so Laravel throttling/audit sees the real client IP — configure Laravel's `TrustProxies`, and note it is only trustworthy behind a proxy you control.
 
 ## Configuration reference
 
@@ -477,6 +509,7 @@ import { SanctumProvider } from "next-sanctum"
     updatePasswords: true,
     twoFactorAuthentication: { confirm: true, confirmPassword: true }, // or `false`
     passkeys: false,                    // requires @laravel/passkeys; `true` / { confirmPassword }
+    deviceSessions: false,              // requires custom Laravel endpoints (see Device sessions)
   },
 
   // Override any endpoint (deep-merged over the Fortify/Sanctum defaults)
@@ -642,6 +675,9 @@ const me = useUser<User>()                  // User | null
 - The token default is **not** localStorage; use an HttpOnly cookie + the catch-all proxy in production.
 - `safeRedirect()` rejects cross-origin / control-char targets. The catch-all proxy is anti-SSRF (`upstream` pinned).
 - Verify auth in **every** Server Action (the proxy is optimistic only).
+- The client rejects absolute URLs whose origin ≠ `baseUrl` — the CSRF header / Bearer token must never travel cross-origin (same guard as `serverFetch`).
+- Call `next-sanctum/actions` helpers (and stateful `serverFetch`) from **Server Actions only** — see the [callout above](#login-via-server-action-next-sanctumactions).
+- The `request` event payload includes the request `init` (body included — e.g. login credentials). Don't pipe it verbatim into logs/analytics.
 
 ## License
 

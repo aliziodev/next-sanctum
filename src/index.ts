@@ -20,6 +20,12 @@ export { useTwoFactor } from "./react/use-two-factor"
 export type { TwoFactorApi } from "./features/two-factor"
 export { usePasskeys } from "./react/use-passkeys"
 export type { PasskeyRegistration, PasskeysApi } from "./features/passkeys"
+export { useSessions } from "./react/use-sessions"
+export type {
+  DeviceSession,
+  LogoutOtherSessionsPayload,
+  SessionsApi,
+} from "./features/sessions"
 
 // Token storage (token mode).
 export { CookieTokenStorage, LocalStorage, MemoryStorage } from "./storage"

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  ConfigError,
   errorFromResponse,
   networkError,
   SanctumError,
@@ -12,9 +13,23 @@ describe("joinUrl", () => {
     expect(joinUrl("https://api.test", "/login")).toBe("https://api.test/login")
     expect(joinUrl("https://api.test/", "login")).toBe("https://api.test/login")
   })
-  it("passes absolute URLs through", () => {
-    expect(joinUrl("https://api.test", "https://other.test/x")).toBe(
-      "https://other.test/x",
+  it("passes same-origin absolute URLs through", () => {
+    expect(joinUrl("https://api.test", "https://api.test/x")).toBe(
+      "https://api.test/x",
+    )
+    expect(joinUrl("https://api.test/base", "HTTPS://api.test/x")).toBe(
+      "HTTPS://api.test/x",
+    )
+  })
+  it("rejects cross-origin absolute URLs (credential leak)", () => {
+    expect(() => joinUrl("https://api.test", "https://other.test/x")).toThrow(
+      ConfigError,
+    )
+    expect(() => joinUrl("https://api.test", "https://api.test:8443/x")).toThrow(
+      ConfigError,
+    )
+    expect(() => joinUrl("https://api.test", "http://api.test/x")).toThrow(
+      ConfigError,
     )
   })
 })

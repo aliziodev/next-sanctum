@@ -114,4 +114,45 @@ describe("createSanctumRouteProxy", () => {
     expect(headers.get("origin")).toBe("https://app.test")
     expect(headers.get("referer")).toBe("https://app.test/dashboard")
   })
+
+  it("forwards X-Forwarded-For (Laravel throttling / audit)", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response("ok", { status: 200 }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    const handler = createSanctumRouteProxy({ upstream: "https://api.laravel.test" })
+
+    const req = new Request("https://app.test/api/sanctum/login", {
+      method: "POST",
+      headers: { "x-forwarded-for": "203.0.113.7" },
+      body: "{}",
+    })
+    await handler(req, ctx(["login"]))
+
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers
+    expect(headers.get("x-forwarded-for")).toBe("203.0.113.7")
+  })
+
+  it("defaults to Cache-Control: no-store when upstream omits it", async () => {
+    const fetchMock = vi.fn(async () => new Response("ok", { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+    const handler = createSanctumRouteProxy({ upstream: "https://api.laravel.test" })
+    const res = await handler(new Request("https://app.test/x"), ctx(["api", "user"]))
+    expect(res.headers.get("cache-control")).toBe("no-store")
+  })
+
+  it("keeps the upstream Cache-Control when present", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response("ok", {
+          status: 200,
+          headers: { "cache-control": "public, max-age=60" },
+        }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    const handler = createSanctumRouteProxy({ upstream: "https://api.laravel.test" })
+    const res = await handler(new Request("https://app.test/x"), ctx(["api", "user"]))
+    expect(res.headers.get("cache-control")).toBe("public, max-age=60")
+  })
 })
