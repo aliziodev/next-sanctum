@@ -168,6 +168,10 @@ const FORWARD_REQUEST_HEADERS = [
   // useless. Only trustworthy when a proxy you control sets it (and Laravel's
   // TrustProxies is configured); a direct client can spoof it either way.
   "x-forwarded-for",
+  // Without this, Laravel records the Next server's runtime UA ("node") for every
+  // request — device-session lists and audit logs then show "Unknown browser".
+  // Forward the real browser User-Agent instead.
+  "user-agent",
 ]
 
 // Allowlist of response headers forwarded to the client — internal/debug headers

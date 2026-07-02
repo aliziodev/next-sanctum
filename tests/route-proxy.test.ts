@@ -134,6 +134,27 @@ describe("createSanctumRouteProxy", () => {
     expect(headers.get("x-forwarded-for")).toBe("203.0.113.7")
   })
 
+  it("forwards User-Agent (device sessions / audit show the real browser)", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response("ok", { status: 200 }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    const handler = createSanctumRouteProxy({ upstream: "https://api.laravel.test" })
+
+    const req = new Request("https://app.test/api/sanctum/login", {
+      method: "POST",
+      headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0) Chrome/120" },
+      body: "{}",
+    })
+    await handler(req, ctx(["login"]))
+
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers
+    expect(headers.get("user-agent")).toBe(
+      "Mozilla/5.0 (Windows NT 10.0) Chrome/120",
+    )
+  })
+
   it("defaults to Cache-Control: no-store when upstream omits it", async () => {
     const fetchMock = vi.fn(async () => new Response("ok", { status: 200 }))
     vi.stubGlobal("fetch", fetchMock)
